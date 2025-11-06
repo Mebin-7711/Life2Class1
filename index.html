@@ -132,6 +132,7 @@ const DropdownMenu = ({ userId, onLogout, onHistoryClick }) => {
 // --- Learning Chatbot Component ---
 const LearningChatbot = ({ learningResult, isGenerating }) => {
     const CHAT_API_MODEL = 'gemini-2.5-flash-preview-09-2025';
+    // Base URL is constructed safely using the constant API_KEY variable
     const CHAT_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${CHAT_API_MODEL}:generateContent?key=${API_KEY}`;
     
     // History uses the format expected by the Gemini API
@@ -175,10 +176,13 @@ const LearningChatbot = ({ learningResult, isGenerating }) => {
         setChatLoading(true);
 
         try {
-            // The API payload needs all preceding messages, including the system instruction (which is at history[0])
+            // The contents array for the API needs all preceding messages, excluding the system instruction
+            const contentsToSend = newHistory.filter(m => m.role !== 'system'); 
+            
             const payload = {
-                contents: newHistory.filter(m => m.role !== 'system'), // Send all history *except* the system instruction
-                systemInstruction: history.find(m => m.role === 'system')?.parts[0] || { parts: [{ text: "You are a helpful tutor." }] } // Re-add the system instruction outside the contents array
+                contents: contentsToSend,
+                // System instruction is sent separately
+                systemInstruction: { parts: [{ text: history.find(m => m.role === 'system')?.parts[0]?.text || "You are a helpful tutor." }] }
             };
 
             const maxRetries = 5;
